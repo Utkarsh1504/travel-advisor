@@ -45,7 +45,6 @@ const TourCard = ({ tour }) => {
           </div>
         </CardBody>
       </Card>
-
     </div>
   )
 }
