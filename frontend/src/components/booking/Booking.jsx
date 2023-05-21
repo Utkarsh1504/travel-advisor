@@ -1,38 +1,78 @@
-import React, {useState} from 'react';
-import './booking.css';
-import { Form, FormGroup, ListGroup, Button, ListGroupItem } from 'reactstrap';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useContext } from "react";
+import "./booking.css";
+import { Form, FormGroup, ListGroup, Button, ListGroupItem } from "reactstrap";
+import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
+import { BASE_URL } from "../../utils/config";
 
 const Booking = ({ tour, avgRating }) => {
-  const { price, reviews } = tour;
+  const { price, reviews, title } = tour;
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const [credentials, setCredentials] = useState({
-    userId: '01',
-    userEmail: 'example@gmail.com',
-    fullName: '',
-    phone: '',
+  const [booking, setBooking] = useState({
+    userId: user && user._id,
+    userEmail: user && user.email,
+    tourName: title,
+    fullName: "",
+    phone: "",
     guestSize: 1,
-    bookAt:''
+    bookAt: "",
   });
 
   const handleChange = (e) => {
-    setCredentials(prev=>({...prev, [e.target.id]:e.target.value}));
-  }
+    const inputDate = new Date(e.target.value);
+    const currentDate = new Date();
+    if (inputDate < currentDate) {
+      setErrorMessage("Enter Valid Date");
+    } else {
+      setErrorMessage("");
+    }
+    setBooking((prev) => ({ ...prev, [e.target.id]: e.target.value }));
+  };
 
   const serviceFee = 10;
-  const totalAmount = Number(price)*Number(credentials.guestSize)+Number(serviceFee);
+  const totalAmount =
+    Number(price) * Number(booking.guestSize) + Number(serviceFee);
+
   // send data to server
-  const handleClick = (e) => {
+  const handleClick = async (e) => {
     e.preventDefault();
-    navigate('/ty');
-    // console.log(credentials);
-  }
+    console.log(booking);
+
+    try {
+      if (!user || user === undefined || user === null) {
+        return alert("Please sign in");
+      }
+
+      const res = await fetch(`${BASE_URL}/booking`, {
+        method: "post",
+        headers: {
+          "content-type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(booking),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        return alert(result.message);
+      }
+      navigate("/ty");
+    } catch (error) {
+      alert(error.message);
+    }
+  };
 
   return (
-    <div className='booking'>
+    <div className="booking">
       <div className="booking__top d-flex align-items-center justify-content-between">
-        <h3>${price}<span>/per person</span></h3>
+        <h3>
+          ${price}
+          <span>/per person</span>
+        </h3>
         <span className="tour__rating d-flex align-items-center">
           <i className="ri-star-fill"></i>
           {avgRating === 0 ? null : avgRating} ({reviews?.length})
@@ -41,40 +81,47 @@ const Booking = ({ tour, avgRating }) => {
       {/* -----------booking form start ----------- */}
       <div className="booking__form">
         <h5>Information</h5>
-        <Form className='booking__info-form' onSubmit={handleClick}>
+        <Form className="booking__info-form" onSubmit={handleClick}>
           <FormGroup>
             <input
-              type='text'
-              placeholder="Full Name" id='fullName' 
+              type="text"
+              placeholder="Full Name"
+              id="fullName"
               required
               onChange={handleChange}
             />
           </FormGroup>
           <FormGroup>
             <input
-              type='number'
+              type="number"
               placeholder="Phone"
-              id='phone' 
+              id="phone"
               required
               onChange={handleChange}
             />
           </FormGroup>
-          <FormGroup className='d-flex align-items-center gap-3'>
+          <FormGroup className="d-flex align-items-center gap-3">
             <input
-              type='date'
+              type="date"
               placeholder=""
-              id='bookAt' 
+              id="bookAt"
               required
+              min={new Date().toISOString().split("T")[0]}
               onChange={handleChange}
             />
             <input
-              type='number'
+              type="number"
               placeholder="Guest"
-              id='guestSize' 
+              id="guestSize"
               required
               onChange={handleChange}
             />
           </FormGroup>
+          {errorMessage && (
+            <p style={{ color: "red", fontSize: "14px", marginTop: "5px" }}>
+              {errorMessage}
+            </p>
+          )}
         </Form>
       </div>
       {/* -----------booking form end ----------- */}
@@ -82,28 +129,29 @@ const Booking = ({ tour, avgRating }) => {
       {/* ------------- booking bottom start--------------- */}
       <div className="booking__bottom">
         <ListGroup>
-          <ListGroupItem className='border-0 px-0'>
-            <h5 className='d-flex align-items-center gap-1'>
+          <ListGroupItem className="border-0 px-0">
+            <h5 className="d-flex align-items-center gap-1">
               ${price}
-              <i className='ri-close-line'></i>
-               1 person
+              <i className="ri-close-line"></i>1 person
             </h5>
             <span> ${price}</span>
           </ListGroupItem>
-          <ListGroupItem className='border-0 px-0'>
+          <ListGroupItem className="border-0 px-0">
             <h5>Service Charge</h5>
             <span> ${serviceFee}</span>
           </ListGroupItem>
-          <ListGroupItem className='total border-0 px-0'>
+          <ListGroupItem className="total border-0 px-0">
             <h5>Total</h5>
             <span> ${totalAmount}</span>
           </ListGroupItem>
         </ListGroup>
-        <Button className='btn primary__btn w-100 mt-4' onClick={handleClick}>Book Now</Button>
-        </div>
+        <Button className="btn primary__btn w-100 mt-4" onClick={handleClick}>
+          Book Now
+        </Button>
+      </div>
       {/* ------------- booking bottom end --------------- */}
     </div>
-  )
-}
+  );
+};
 
 export default Booking;

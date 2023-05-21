@@ -1,34 +1,54 @@
-import React, {useState} from 'react';
-import { Container, Row, Col, Form, FormGroup, Button } from 'reactstrap';
-import '../styles/login.css';
-import { Link } from 'react-router-dom';
-import registerImg from '../assets/images/register.png';
-import userIcon from '../assets/images/user.png';
+import React, { useState, useContext } from "react";
+import { Container, Row, Col, Form, FormGroup, Button } from "reactstrap";
+import "../styles/login.css";
+import { Link, useNavigate } from "react-router-dom";
+import registerImg from "../assets/images/register.png";
+import userIcon from "../assets/images/user.png";
+import { AuthContext } from "./../context/AuthContext";
+import { BASE_URL } from "./../utils/config";
 
 const Register = () => {
-
   const [credentials, setCredentials] = useState({
     username: undefined,
     email: undefined,
-    password: undefined
+    password: undefined,
   });
+  const navigate = useNavigate();
+
+  const { dispatch } = useContext(AuthContext);
 
   const handleChange = (e) => {
-    setCredentials(prev => ({ ...prev, [e.target.id]: e.target.value }));
+    setCredentials((prev) => ({ ...prev, [e.target.id]: e.target.value }));
   };
 
-  const handleClick = (e) => {
+  const handleClick = async (e) => {
     e.preventDefault();
-    console.log(credentials);
+
+    try {
+      const res = await fetch(`${BASE_URL}/auth/register`, {
+        method: "post",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(credentials),
+      });
+      const result = await res.json();
+      if (!res.ok) alert(result.message);
+
+      dispatch({ type: "REGISTER_SUCCESS" });
+      navigate("/login");
+    } catch (error) {
+      alert(error.message);
+    }
   };
 
   return (
     <section>
       <Container>
         <Row>
-          <Col lg='8' className='m-auto'>
+          <Col lg="8" className="m-auto">
             <div className="login__container d-flex justify-content-between">
-              <div className='login__img'>
+              <div className="login__img">
                 <img src={registerImg} alt="" />
               </div>
               <div className="login__form">
@@ -39,44 +59,53 @@ const Register = () => {
                 <Form onSubmit={handleClick}>
                   <FormGroup>
                     <input
-                      type='name' placeholder='Username' required 
-                      id='username'
-                      autoComplete='off'
+                      type="name"
+                      placeholder="Username"
+                      required
+                      id="username"
+                      autoComplete="off"
                       onChange={handleChange}
                     />
                   </FormGroup>
                   <FormGroup>
                     <input
-                      type='email' placeholder='Email' required 
-                      id='email'
-                      autoComplete='off'
+                      type="email"
+                      placeholder="Email"
+                      required
+                      id="email"
+                      autoComplete="off"
                       onChange={handleChange}
                     />
                   </FormGroup>
                   <FormGroup>
                     <input
-                      type='password' placeholder='Password' required 
-                      autoComplete='off'
+                      type="password"
+                      placeholder="Password"
+                      required
+                      autoComplete="off"
                       onChange={handleChange}
-                      id='password'
+                      id="password"
                     />
                   </FormGroup>
-                  
+
                   <Button
-                    className='btn secondary__btn auth__btn' onSubmit={handleClick}
-                    type='submit'
+                    className="btn secondary__btn auth__btn"
+                    onSubmit={handleClick}
+                    type="submit"
                   >
                     Create Account
                   </Button>
                 </Form>
-                <p>Already have an account? <Link to='/login'>Login</Link></p>
+                <p>
+                  Already have an account? <Link to="/login">Login</Link>
+                </p>
               </div>
             </div>
           </Col>
         </Row>
       </Container>
     </section>
-  )
-}
+  );
+};
 
 export default Register;
