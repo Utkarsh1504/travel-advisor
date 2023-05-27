@@ -87,3 +87,12 @@
      width: calc(100% - 50%);
   }
 }
+@media only screen and (max-width: 768px) {
+  .logo img {
+     width: 45%;
+  }
+
+  .menu {
+     width: calc(100% - 50%);
+  }
+}
